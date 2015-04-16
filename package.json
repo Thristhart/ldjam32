@@ -1,0 +1,25 @@
+{
+  "name": "ldjam32",
+  "version": "1.0.0",
+  "description": "ludum dare 32 entry",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Thristhart/ldjam32.git"
+  },
+  "author": "thristhart <tom@shea.at>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Thristhart/ldjam32/issues"
+  },
+  "homepage": "https://github.com/Thristhart/ldjam32",
+  "devDependencies": {
+    "browserify": "^9.0.8",
+    "gulp": "^3.8.11",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0"
+  }
+}
