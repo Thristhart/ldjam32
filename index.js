@@ -1,60 +1,26 @@
-var canvas;
-var context;
-
-var Matter = require('matter-js');
-var Player = require('./player.js');
-
-var physOpts = {};
-
-var engine = Matter.Engine.create(null, physOpts);
-var world = engine.world;
-
-var InputManager = require('./input.js');
-
-var ents = [];
+var PitchDetector = require('pitch-detector');
+var game = require('./game.js');
 
 window.addEventListener("load", function() {
-  canvas = document.getElementById("display");
-  context = canvas.getContext("2d");
-  context.imageSmoothingEnabled = false;
-  gameContext.context = context;
-
-  setup();
-  updateLoop(performance.now());
+  buildDetector();
+  game.setup(document.getElementById("display"));
 });
-
-function addEnt(ent) {
-  Matter.World.add(world, ent.makePhysicsObj());
-  ents.push(ent);
+function update(stats, detector) {
+  game.update(stats, detector);
 }
 
-var alivePlayer;
-function setup() {
-  var ground = Matter.Bodies.rectangle(canvas.width/2, canvas.height + 40, canvas.width, 80, {isStatic: true});
-  Matter.World.add(engine.world, ground);
+function buildDetector() {
+  var detector = new PitchDetector({
+    "context": new AudioContext(),
+    "start": true,
+    "length": 1024,
+    "stopAfterDetection": false,
+    "normalize": "rms",
+    "minRms": 0.01,
+    "minCorrelationIncrease": false,
+    "minCorrelation": 0.85,
+    "onDetect": update
+  });
 
-  alivePlayer = new Player(50, 50);
-  addEnt(alivePlayer);
-
-  InputManager.setup();
+  detector.start();
 }
-
-var lastFrameTime = performance.now();
-function updateLoop(now) {
-  var delta = now - lastFrameTime;
-  if(delta > 33)
-    delta = 33;
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  Matter.Engine.update(engine, delta);
-  for(var i = 0; i < ents.length; i++) {
-    ents[i].update(context);
-  }
-  lastFrameTime = now;
-  requestAnimationFrame(updateLoop);
-}
-
-window.gameContext = this;
-this.alivePlayer = alivePlayer;
-this.ents = ents;
-this.engine = engine;
-this.Matter = Matter;
