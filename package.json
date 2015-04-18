@@ -21,5 +21,8 @@
     "gulp": "^3.8.11",
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.1.0"
+  },
+  "dependencies": {
+    "PhysicsJS": "git://github.com/wellcaffeinated/PhysicsJS"
   }
 }
