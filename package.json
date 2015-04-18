@@ -28,7 +28,6 @@
     "vinyl-transform": "^1.0.0"
   },
   "dependencies": {
-    "PhysicsJS": "git://github.com/wellcaffeinated/PhysicsJS",
-    "matter-js": "git://github.com/liabru/matter-js"
+    "pitch-detector": "git://github.com/markmarijnissen/PitchDetect"
   }
 }
