@@ -18,7 +18,7 @@ function buildDetector() {
     "normalize": "rms",
     "minRms": 0.01,
     "minCorrelationIncrease": false,
-    "minCorrelation": 0.85,
+    "minCorrelation": 0.8,
     "onDetect": update
   });
 

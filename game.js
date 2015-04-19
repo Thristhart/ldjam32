@@ -1,5 +1,7 @@
 var Game = {};
 
+var images = require('./images.js');
+
 Game.setup = function(canvas) {
   Game.canvas = canvas;
   Game.context = Game.canvas.getContext("2d");
@@ -9,6 +11,9 @@ Game.setup = function(canvas) {
   Game.lowestFreq = 2001;
   Game.highestFreq = 0;
 
+  Game.targets = [];
+  Game.sequence = null;
+
   Game.render(performance.now());
 };
 
@@ -17,6 +22,22 @@ Game.changeState = function(newState) {
   Game.lastStateTransition = performance.now();
   Game.state = newState;
   Game.noteCounter = 0;
+  if(newState == "endtraining") {
+    Game.addTarget(250);
+  }
+  if(newState == "round1") {
+    Game.setSequence({
+      0: 100,
+      2000: [200, 300],
+      4000: 500,
+      4500: 100
+    });
+  }
+};
+
+Game.setSequence = function(seq) {
+  Game.sequenceStartTime = performance.now();
+  Game.sequence = seq;
 };
 
 Game.update = function(pitchStats, detector) {
@@ -24,12 +45,12 @@ Game.update = function(pitchStats, detector) {
     Game.changeState("training2");
   }
   if(Game.state == "training2") {
-    if(Game.noteCounter > 100) {
+    if(Game.noteCounter > 50) {
       Game.changeState("training3");
     }
   }
-  if(pitchStats.frequency > 3000)
-    pitchStats.frequency = 3000;
+  if(pitchStats.frequency > 2000)
+    pitchStats.frequency = 2000;
   var note = {frequency: pitchStats.frequency, timestamp: performance.now()};
   Game.notes.push(note);
   Game.notes.shift();
@@ -59,10 +80,50 @@ Game.update = function(pitchStats, detector) {
   if(total < 10)
     return;
   Game.averageFreq = Math.floor(total / count);
-  if(Game.averageFreq < Game.lowestFreq)
-    Game.lowestFreq = Game.averageFreq;
-  if(Game.averageFreq > Game.highestFreq)
-    Game.highestFreq = Game.averageFreq;
+
+  if(Game.state.indexOf("training") == 0) {
+    if(Game.averageFreq < Game.lowestFreq)
+      Game.lowestFreq = Game.averageFreq;
+    if(Game.averageFreq > Game.highestFreq)
+      Game.highestFreq = Game.averageFreq;
+  }
+};
+
+Game.freqToPos = function(freq) {
+  var y = (freq - Game.lowestFreq) / (Game.highestFreq - Game.lowestFreq);
+  y = 1 - y;
+  y *= Game.canvas.height;
+  return y;
+};
+Game.posToFreq = function(y) {
+  y /= Game.canvas.height;
+  y = 1 - y;
+  y *= (Game.highestFreq - Game.lowestFreq);
+  y += Game.lowestFreq;
+  return y;
+};
+
+Game.onTargetHit = function(target, note) {
+  console.log("pow", target);
+  if(target.health < 0) {
+    Game.targets.splice(Game.targets.indexOf(target), 1);
+    Game.notes[Game.notes.indexOf(note)] = undefined;
+    console.log("RIP");
+
+    if(Game.state == "endtraining") {
+      Game.changeState("round1");
+    }
+  }
+};
+
+Game.checkForHit = function(note, x) {
+  for(var i = 0; i < Game.targets.length; i++) {
+    var target = Game.targets[i];
+    var pos = Game.freqToPos(note.frequency);
+    if(Math.abs(target.y - pos) < 50 && Math.abs(target.x - x) < 50) {
+      return target;
+    }
+  }
 };
 
 Game.render = function(time) {
@@ -74,10 +135,16 @@ Game.render = function(time) {
     if(note) {
       var x = (time - note.timestamp) / 500;
       x *= Game.canvas.width;
-      var y = (note.frequency - Game.lowestFreq) / (Game.highestFreq - Game.lowestFreq);
-      y = 1 - y;
-      y *= (Game.canvas.height);
+      var y = Game.freqToPos(note.frequency);
       Game.context.fillText(Math.floor(note.frequency), x, y);
+      var hit = Game.checkForHit(note, x);
+      if(hit) {
+        hit.health--;
+        Game.onTargetHit(hit, note);
+      }
+      if(x > Game.canvas.width) {
+        delete(Game.notes[i]);
+      }
     }
   }
   Game.context.font = "48px serif";
@@ -105,7 +172,48 @@ Game.render = function(time) {
   if(Game.state == "endtraining") {
     Game.context.fillText("Hit the target to start!", 150, 250);
   }
+
+  for(var i = 0; i < Game.targets.length; i++) {
+    var target = Game.targets[i];
+    if(target.health < target.maxhealth) {
+      Game.context.fillStyle = "green";
+      Game.context.fillRect(target.x - 50, target.y - 60, 50, 10);
+      var fill = 50 * (1 - target.health / target.maxhealth);
+      Game.context.fillStyle = "red";
+      Game.context.fillRect(target.x - fill, target.y - 60, fill, 10);
+    }
+    Game.context.drawImage(images.TARGET, Game.targets[i].x - 70, Game.targets[i].y - 50);
+
+    if(Game.state != "endtraining") {
+      target.x -= target.speed;
+    }
+  }
+  Game.context.fillStyle = "black";
+
+
+  if(Game.sequence) {
+    for(var t in Game.sequence) {
+      if(time - Game.sequenceStartTime > t) {
+        var tar = Game.sequence[t];
+        if(Array.isArray(tar)) {
+          for(var j in tar) {
+            Game.addTarget(tar[j]);
+          }
+        }
+        else {
+          Game.addTarget(tar);
+        }
+        delete(Game.sequence[t]);
+      }
+    }
+  }
   requestAnimationFrame(Game.render);
+};
+Game.addTarget = function(pos, health) {
+  health = health || 25;
+  var targ = {x: Game.canvas.width, y: pos, frequency: Game.posToFreq(pos),
+    maxhealth: health, health: health, speed:1};
+  Game.targets.push(targ);
 };
 
 window.Game = Game;
