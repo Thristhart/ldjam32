@@ -369,7 +369,8 @@ Game.render = function(time) {
   for(var i = 0; i < Game.projectiles.length; i++) {
     var bullet = Game.projectiles[i];
     bullet.x += 10;
-    Game.context.fillRect(bullet.x - 20, bullet.y, 40, bullet.size);
+    Game.context.drawImage(images.NOTE, bullet.x, bullet.y, bullet.size * 2, bullet.size * 2);
+    //Game.context.fillRect(bullet.x - 20, bullet.y, 40, bullet.size);
     var hit = Game.checkForHit(bullet, bullet.x);
     if(hit) {
       Game.onTargetHit(hit, bullet);

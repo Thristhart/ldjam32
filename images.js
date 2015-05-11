@@ -6,5 +6,6 @@ function loadImage(path) {
 }
 i.TARGET = loadImage("./assets/target.png");
 i.SHIP = loadImage("./assets/ship.png");
+i.NOTE = loadImage("./assets/note.png");
 
 module.exports = i;

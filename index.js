@@ -2,11 +2,19 @@ var PitchDetector = require('pitch-detector');
 var game = require('./game.js');
 
 window.addEventListener("load", function() {
-  buildDetector();
-  game.setup(document.getElementById("display"));
+  var ctx = document.getElementById("display").getContext("2d");
+  ctx.font = "48px serif";
+  ctx.fillText("Click to start", 300, 250);
+  document.getElementById("display").addEventListener("click", start);
 });
 function update(stats, detector) {
   game.update(stats, detector);
+}
+
+function start() {
+  buildDetector();
+  game.setup(document.getElementById("display"));
+  document.getElementById("display").removeEventListener("click", start);
 }
 
 function buildDetector() {
